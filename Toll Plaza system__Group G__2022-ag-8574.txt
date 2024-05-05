@@ -1,0 +1,425 @@
+Group Name: 'G'.
+Group Members:M Jameel ur Rehman(2022-Ag-8615).
+		M Anesss(2022-Ag-8620).
+		M Jabbar(2022-Ag-8601).
+		M Ahmer(2022-Ag-8574).
+Project Title: Toll Plaza System
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Main Form:
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Toll_Plaza_System
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void btnVehicle_Click(object sender, EventArgs e)
+        {
+            //Access Vehicle Registration Form
+            Form2 f2= new Form2();
+            f2.Show();
+        }
+
+        private void btnToll_Click(object sender, EventArgs e)
+        {
+            //Access Toll Collection Form
+            Form f3= new Form3();
+            f3.Show();
+        }
+
+        private void btnRecords_Click(object sender, EventArgs e)
+        {
+            //Access Records Form
+            Form f4 = new Form4();
+            f4.Show();
+        }
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Vehicle Registration Form:
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.OleDb;
+using System.Linq.Expressions;
+
+namespace Toll_Plaza_System
+{
+    public partial class Form2 : Form
+    {
+        //Define Objects for Accessing Data From Database
+        OleDbConnection conn;
+        OleDbCommand cmd;
+        OleDbDataAdapter dataAdapter;
+        OleDbDataReader reader;
+        DataTable dt;
+        public Form2()
+        {
+            InitializeComponent();
+        }
+        // Create a function for showing data in gridview
+        void GetVehicle()
+        {
+            // Build connection by connecting your project with database file 
+            conn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Vehicle.accdb");
+            // Access table from database
+            dt = new DataTable();
+            // Perform Select query
+            dataAdapter = new OleDbDataAdapter("SELECT *FROM Vehicles", conn);
+            // Open the Connection
+            conn.Open();
+            // Pass through dataAdapter object
+            dataAdapter.Fill(dt);
+            // Now store data in grid view
+            dataGridView1.DataSource = dt;
+            // Close the connection
+            conn.Close();
+        }
+
+        private void Form2_Load(object sender, EventArgs e)
+        {
+            // Now call the function
+            GetVehicle();
+        }
+
+        private void btnRegister_Click(object sender, EventArgs e)
+        {
+            // Now perform Insert query
+            string query = "INSERT INTO Vehicles(VEHICLENUMBER, VEHICLENAME, VEHICLETYPE, TOLLAMOUNT)" +
+                "VALUES (@num, @name, @type, @amount )";
+            // Now take the new enetered data into gridview
+            cmd= new OleDbCommand(query, conn);
+            cmd.Parameters.AddWithValue("@num", NumberBox.Text);
+            cmd.Parameters.AddWithValue("@name", VehicleCombo.Text);
+            // Check if the user click on LTV or HTV Button
+            if(radioButton1.Checked ) 
+            {
+                cmd.Parameters.AddWithValue("@type", radioButton1.Text);
+            } else
+            {
+                cmd.Parameters.AddWithValue("@type", radioButton2.Text);
+            }
+            cmd.Parameters.AddWithValue("@amount", ComboAmount.Text);
+            // Open the connection
+            conn.Open();
+            // Execute query
+            cmd.ExecuteNonQuery();
+            // Close the connection
+            conn.Close();
+            // Now show the user that the date is entered into the gridview
+            MessageBox.Show("Registered Successfully");
+            // Also Call the function
+            GetVehicle();
+
+        }
+
+        private void dataGridView1_CellEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            // Show the inserted data in textboxes, comboboxes and radiobuttons 
+            NumberBox.Text= dataGridView1.CurrentRow.Cells[0].Value.ToString();
+            VehicleCombo.Text = dataGridView1.CurrentRow.Cells[1].Value.ToString();
+            ComboAmount.Text = dataGridView1.CurrentRow.Cells[3].Value.ToString();
+
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            // Now Update the inserted data by performing Update query
+            string query = "UPDATE Vehicles " +
+                "SET TOLLAMOUNT = @amount " +
+                "WHERE VEHICLENUMBER= @num";
+            // Now Reuse the code from "Insert Query" Module
+            cmd = new OleDbCommand(query, conn);
+            cmd.Parameters.AddWithValue("@amount",ComboAmount.Text);
+            cmd.Parameters.AddWithValue("@num", NumberBox.Text);
+            //Open the connection
+            conn.Open();
+            //Execute query
+            cmd.ExecuteNonQuery();
+            //Close the connection
+            conn.Close();
+            //Now show the user that the date is entered into the gridview
+            MessageBox.Show("Toll Amount is Updated");
+            //Also Call the function
+            GetVehicle();
+        }
+
+
+        private void btnDel_Click(object sender, EventArgs e)
+        {
+            // Now Delete functionality has to be performed
+            string query = "DELETE FROM Vehicles " +
+                "WHERE VEHICLENUMBER = @num";
+            cmd= new OleDbCommand(query, conn);
+            cmd.Parameters.AddWithValue("@num", NumberBox.Text);
+            conn.Open();
+            // Execute query
+            cmd.ExecuteNonQuery();
+            // Close the connection
+            conn.Close();
+            // Now show the user that the date is entered into the gridview
+            MessageBox.Show("Record is Deleted");
+            // Also Call the function
+            GetVehicle();
+
+        }
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Toll Collection Form:
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.OleDb;
+
+namespace Toll_Plaza_System
+{
+    public partial class Form3 : Form
+    {
+        //Define objects for accessiing database
+        OleDbConnection connection;
+        OleDbCommand command;
+        OleDbDataReader rd;
+        OleDbDataAdapter ad;
+        DataTable data;
+
+        public Form3()
+        {
+            InitializeComponent();
+        }
+        // Create function for to show data in grid view
+        void GetToll()
+        {
+            //Establish connection with the database file
+            using (connection = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source= TollCollection.accdb"))
+            {
+                //Now access data table from database
+                data = new DataTable();
+                //Implement "Select" query
+                using (OleDbDataAdapter ad = new OleDbDataAdapter("SELECT * FROM [TOLL]", connection))
+                {
+                    //Now open the connection
+                    connection.Open();
+                    //Now pass through 'ad' object
+                    ad.Fill(data);
+                    //Now store data in grid view
+                    dataGridView1.DataSource = data;
+                    //Now close the connection
+                    connection.Close();
+                }
+            }
+
+        }
+        private void Form3_Load(object sender, EventArgs e)
+        {
+            //Now call the function
+            GetToll();
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            //Also Establish connection with the database file
+            connection = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source= TollCollection.accdb");
+            //Now Implement "Insert" Query
+            string query = "INSERT INTO [TOLL] (VEHICLENUMBER, ENTERINGTIME, LEAVINGTIME, TOLLCOLLECTED)" +
+                "VALUES( @plate, @ent, @leav, @fee) ";
+            //Now insert the data
+            command= new OleDbCommand(query, connection);
+            command.Parameters.AddWithValue("@plate", Numtext.Text);
+            command.Parameters.AddWithValue("@ent", dateTimePicker1.Value);
+            command.Parameters.AddWithValue("@leav", dateTimePicker2.Value);
+            command.Parameters.AddWithValue("@fee", AmountCombo.Text);
+            //Now open the connection
+            connection.Open();
+            //Execute query
+            command.ExecuteNonQuery();
+            //Now close the connection
+            connection.Close();
+            //Print a message to the user that the data is inserted
+            MessageBox.Show("Saved Successfully");
+            //Now call the function
+            GetToll();
+        }
+
+        private void btnRemove_Click(object sender, EventArgs e)
+        {
+            connection = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source= TollCollection.accdb");
+            //Impement "Delete" query
+            string query = "DELETE FROM [TOLL] " +
+                "WHERE VEHICLENUMBER= @plate";
+            command = new OleDbCommand(query, connection);
+            command.Parameters.AddWithValue("@plate", Numtext.Text);
+            connection.Open();
+            //Execute query
+            command.ExecuteNonQuery();
+            //Close the connection
+            connection.Close();
+            //Print a message to the user that the record is deleted
+            MessageBox.Show("Deleted Successfully");
+            //Now call the function
+            GetToll();
+        }
+
+        private void dataGridView1_CellEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            //Show the inserted data in gridview
+            Numtext.Text = dataGridView1.CurrentRow.Cells[0].Value.ToString();
+            dateTimePicker1.Text = dataGridView1.CurrentRow.Cells[1].Value.ToString();
+            dateTimePicker2.Text = dataGridView1.CurrentRow.Cells[2].Value.ToString();
+            AmountCombo.Text = dataGridView1.CurrentRow.Cells[3].Value.ToString();
+        }
+
+        private void btnRec_Click(object sender, EventArgs e)
+        {
+            //First Generate a Reciept
+            richTextBox1.Clear();
+            //Craete a method for some "**" characters
+            richTextBox1.Text += "**************************\n";
+            //Now create a method for the title of the project
+            richTextBox1.Text += "****  Toll Plaza System    ****\n";
+            //Now create a method for some other "**" characters
+            richTextBox1.Text += "**************************\n";
+            //Now create a method for Vehicle Number
+            richTextBox1.Text += "Vehicle NO: " + Numtext.Text + "\n\n";
+            //Now create a method for Entering time 
+            richTextBox1.Text += "Entering Time: " + dateTimePicker1.Text + "\n\n";
+            //Now create a method for leaving time
+            richTextBox1.Text += "Leaving Time: " + dateTimePicker2.Text + "\n\n";
+            //Now create a method for the amount collected as toll tax
+            richTextBox1.Text += "Toll Tax: " + AmountCombo.Text + "\n\n";
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            //Now clear all textboxes, datetimepickers and comboboxes
+            Numtext.Text= "";
+            dateTimePicker1.Text= "";
+            dateTimePicker2.Text= "";
+            AmountCombo.Text= "";
+            richTextBox1.Text = "";
+        }
+
+        private void printDocument1_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
+        {
+            //Now write a code for printing the reciept
+            e.Graphics.DrawString(richTextBox1.Text, new Font("Calibri", 18,FontStyle.Bold),Brushes.Black, new Point(10,10));
+
+        }
+
+        private void btnPrint_Click(object sender, EventArgs e)
+        {
+            //Now write code for print button
+            printPreviewDialog1.Document = printDocument1;
+            printPreviewDialog1.ShowDialog();
+        }
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Reports Form:
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.OleDb;
+
+namespace Toll_Plaza_System
+{
+    public partial class Form4 : Form
+    {
+        //Create Objects For accessing database
+        OleDbConnection conn;
+        OleDbCommand cmd;
+        OleDbDataReader reader;
+        OleDbDataAdapter adapter;
+        DataTable dt;
+        public Form4()
+        {
+            InitializeComponent();
+        }
+        //Create a function to show data in database
+        void getVehicles()
+        {
+            //Establish connection with the database file
+            conn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Vehicle.accdb");
+            //Access data from database
+            dt = new DataTable();
+            //Implement Select query
+            adapter= new OleDbDataAdapter("SELECT * FROM Vehicles", conn);
+            //Now open the connection
+            conn.Open();
+            //Passs the dt object through adapter object
+            adapter.Fill(dt);
+            //Store data in the gridview
+            dataGridView1.DataSource = dt;
+            //Close the connection
+            conn.Close();
+        }
+
+        private void Form4_Load(object sender, EventArgs e)
+        {
+            //Now call the function
+            getVehicles();
+            //Subscribe to the databinding event  
+            dataGridView1.DataBindingComplete += dataGridView1_DataBindingComplete;
+        }
+
+        private void dataGridView1_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
+        {
+            //First initialize the values of desired coloumns to Zero
+            int totalVehicles = 0;
+            int vehicleAmount= 0;
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                //Check the indexes of the columns
+                if (row.Cells[1].Value != null && row.Cells[1].Value.ToString() != string.Empty)
+                {
+                    totalVehicles++;
+                }
+
+                if (row.Cells[3].Value != null && row.Cells[3].Value.ToString() != string.Empty)
+                {
+                    vehicleAmount += Convert.ToInt32(row.Cells[3].Value);
+                }
+            }
+            //Display the desired results in the textboxes
+            TotalCars.Text = totalVehicles.ToString();
+            TotalAmount.Text = vehicleAmount.ToString(); 
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            TotalCars.Text = "";
+            TotalAmount.Text = "";
+        }
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
